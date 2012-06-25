@@ -15,6 +15,7 @@ from Xlib import display, X
 from grab import grab_key
 from manager import Manager
 
+# TODO kinda lazy keyboard shortcuts (misses some?)
 # TODO retain workspace numbers somehow (without touching disk)
 # TODO netwmpager has trouble with updates, xfce4-panel is ok
 
@@ -52,6 +53,7 @@ if __name__ == "__main__":
         grab_key(d, mod, key)
 
     m = Manager(d)
+    m.set_loaded(2,1)
 
     # process events
     while True:
@@ -59,11 +61,12 @@ if __name__ == "__main__":
         if event.type & X.KeyPressMask:
             try:
                 cmd = keys[(event.state, event.detail)]
+                print cmd
             except KeyError:
                 continue
 
             if cmd[0] == 'swap':
                 m.swap()
             elif cmd[0] == 'switch':
-                m.switch(cmd[1], cmd[2])
+                #m.switch(cmd[1], cmd[2])
                 print m.loaded

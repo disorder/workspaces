@@ -4,8 +4,13 @@ from Xlib import display
 from screen import Screen
 import subprocess
 import re
+import xlib
 
-# TODO native xlib calls to move and switch windows? (remove wmctrl)
+# TODO retain window focus?
+# TODO why are reported values +10 and +46?
+# x = 10 = 2x5 = 5 is w of window border
+# y = 46 = 2x23 = 23 is h of window title bar
+# (both reported as .x/.y geometry, is this correct?)
 
 def run(cmd):
     #subprocess.Popen(cmd.split())
@@ -17,11 +22,18 @@ def output(cmd):
     # Python 2.7
     #subprocess.check_output(cmd.split())
 
+class Window:
+    def __init__(self,win,x,y,w,h,xrel,yrel,display):
+        self.id = win
+        self.x, self.y, self.w, self.h, self.xrel, self.yrel = x,y,w,h,xrel,yrel
+        self.d = display
+
 class Manager:
     def __init__(self, display):
         # windows will be moved to workspace 1 when switching
         self.loaded = [1, 1]
         self.history = [None, None]
+        self.focus = [4*[None], 4*[None]]
 
         self.display = display
         # currently not really needed, event processing is sequential
@@ -40,30 +52,25 @@ class Manager:
     # returns corresponding display for window
     def get_screen(self, x):
         for i in xrange(len(self.screens)):
-            # TODO maybe also 5-10 pixels less than Screen.w?
+            # TODO maybe include also 5-10 pixels less than Screen.w?
             if x - self.screens[i].x < self.screens[i].w:
                 return i
 
     # update window list
     def update_windows(self):
-        for line in output('wmctrl -lG').splitlines():
-            cols = line.split()
-            d = int(cols[1])
-            if d != -1:
-                self.workspaces[d].append([cols[0], # ID
-                                           int(cols[2]), int(cols[3]), # x, y
-                                           int(cols[4]), int(cols[5]), # w, h
-                                           self.get_screen(int(cols[2]))])
+        for win in xlib.get_windows(self.display):
+            d = xlib.get_desktop(self.display, win)
+            if d != 0xffffffff:
+                geom = xlib.get_geometry(self.display, win)
+                screen = self.get_screen(geom[0])
+                # win_id, x, y, w, h, xrel, yrel, display
+                self.workspaces[d].append(Window(*((win,) + geom + (screen,))))
 
     # update workspace list
     def update_workspaces(self):
-        workspaces = output('wmctrl -d').splitlines()
-        self.workspaces = [[] for i in xrange(len(workspaces))]
-        for i in xrange(len(workspaces)):
-            if re.match('\d+ +\*', workspaces[i]):
-                # normally should be 0 (always active workspace)
-                self.current = i
-                return
+        self.workspaces = [[] for i in xrange(xlib.get_number_of_desktops(self.display))]
+        # normally should be 0 (always active workspace)
+        self.current = xlib.get_current_desktop(self.display)
 
     # update displays
     def update_screens(self):
@@ -74,9 +81,11 @@ class Manager:
         self.update()
 
         for win in self.workspaces[a]:
-            run('wmctrl -i -r %s -t %d' % (win[0], b))
+            xlib.set_desktop(self.display, win.id, b)
         for win in self.workspaces[b]:
-            run('wmctrl -i -r %s -t %d' % (win[0], a))
+            xlib.set_desktop(self.display, win.id, a)
+
+        xlib.commit(self.display)
 
     # swap windows on current displays - implemented for 2 horizontal displays
     def swap(self):
@@ -88,13 +97,14 @@ class Manager:
             return
 
         for win in self.workspaces[self.current]:
-            i = win[5]
-            relx = win[1] - self.screens[i].x
-            rely = win[2] - self.screens[i].y
-            # TODO why are reported values +10 and +46?
-            x = self.screens[(i+1) % 2].x + relx - 10
-            y = self.screens[(i+1) % 2].y + rely - 46
-            run('wmctrl -i -r %s -e 0,%d,%d,-1,-1' % (win[0], x, y))
+            i = win.d
+            relx = win.x - self.screens[i].x
+            rely = win.y - self.screens[i].y
+            x = self.screens[(i+1) % 2].x + relx - (2*win.xrel)
+            y = self.screens[(i+1) % 2].y + rely - (2*win.yrel)
+            xlib.moveresize(self.display, win.id, x, y)
+
+        xlib.commit(self.display)
 
     # swap workspace on display i - implemented for 2 horizontal displays
     def switch(self, i, target):
@@ -116,15 +126,16 @@ class Manager:
 
         # save active workspace
         for win in self.workspaces[0]:
-            if win[5] == i:
-                run('wmctrl -i -r %s -t %d' % (win[0], self.loaded[i]))
+            if win.d == i:
+                xlib.set_desktop(self.display, win.id, self.loaded[i])
 
         # load target workspace
         for win in self.workspaces[target]:
-            if win[5] == i:
-                run('wmctrl -i -r %s -t 0' % win[0])
+            if win.d == i:
+                xlib.set_desktop(self.display, win.id, 0)
 
         self.loaded[i] = target
+        xlib.commit(self.display)
 
     # swap winddows between arbitrary independent workspaces
     def swap_displays(self, d1, w1, d2, w2):
@@ -139,29 +150,29 @@ class Manager:
             return
 
         for win in self.workspaces[w1]:
-            if win[5] == d1:
-                run('wmctrl -i -r %s -t %d' % (win[0], w2))
+            if win.d == d1:
+                xlib.set_desktop(self.display, win.id, w2)
                 # move window, we changed displays
                 if d1 != d2:
-                    relx = win[1] - self.screens[d1].x
-                    rely = win[2] - self.screens[d1].y
-                    # TODO why are reported values +10 and +46?
-                    x = self.screens[d2].x + relx - 10
-                    y = self.screens[d2].y + rely - 46
+                    relx = win.x - self.screens[d1].x
+                    rely = win.y - self.screens[d1].y
+                    x = self.screens[d2].x + relx - (2*win.xrel)
+                    y = self.screens[d2].y + rely - (2*win.yrel)
 
-                    run('wmctrl -i -r %s -e 0,%d,%d,-1,-1' % (win[0],x,y))
+                    xlib.moveresize(self.display, win.id, x, y)
         for win in self.workspaces[w2]:
-            if win[5] == d2:
-                run('wmctrl -i -r %s -t %d' % (win[0], w1))
+            if win.d == d2:
+                xlib.set_desktop(self.display, win.id, w1)
                 # move window, we changed displays
                 if d1 != d2:
-                    relx = win[1] - self.screens[d2].x
-                    rely = win[2] - self.screens[d2].y
-                    # TODO why are reported values +10 and +46?
-                    x = self.screens[d1].x + relx - 10
-                    y = self.screens[d1].y + rely - 46
+                    relx = win.x - self.screens[d2].x
+                    rely = win.y - self.screens[d2].y
+                    x = self.screens[d1].x + relx - (2*win.xrel)
+                    y = self.screens[d1].y + rely - (2*win.yrel)
 
-                    run('wmctrl -i -r %s -e 0,%d,%d,-1,-1' % (win[0],x,y))
+                    xlib.moveresize(self.display, win.id, x, y)
+
+        xlib.commit(self.display)
 
     def command(self, cmd):
         if cmd[0] == 'switch':
@@ -199,6 +210,8 @@ class Manager:
 
 if __name__ == "__main__":
     m = Manager(display.Display())
+    m.update()
+    print m.workspaces
     #m.swap_workspace(0,1)
     #m.swap()
     #m.swap_displays(1,1, 0,3)

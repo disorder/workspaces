@@ -6,10 +6,9 @@ from grab import grab_key
 from manager import Manager
 import sys, os
 
-# TODO kinda lazy keyboard shortcuts (misses some?)
-# TODO netwmpager has trouble with updates, xfce4-panel is ok
-
 ## CONFIGURATION
+
+# don't forget to unbind them in other software (xbindkeys, xfwm4)
 
 # keys as reported by xev program
 shortcuts = ( # 2 displays

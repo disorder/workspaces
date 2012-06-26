@@ -1,3 +1,5 @@
+# Copyright (C) 2012  Adam Sloboda
+
 from ctypes import *
 from ctypes.util import find_library
 

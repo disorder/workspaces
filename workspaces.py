@@ -1,19 +1,6 @@
 #!/usr/bin/env python
 # Copyright (C) 2012  Adam Sloboda
 
-## PROTOTYPE of independent "workspace" switching for 2 displays
-# - uses XGrabKey to catch shortcuts (ctrl+f1..4, win+1..4, win+tab)
-# - uses native workspaces, cuts them by displays and moves windows
-# - workspace 0 is always active(!), 4 other workspaces are for saving windows
-# there are commands:
-# - set_loaded: set current loaded workspaces (restore after crash)
-# - switch: independent switching for 2 displays
-# - swap: swap windows on current native workspace between displays
-# - swap_displays: swap any combination of display/workspace
-# more features:
-# - tries to restore winow focus after switching
-# - retains workspace and window focus status between exits/crashes
-
 from Xlib import display, X
 from grab import grab_key
 from manager import Manager

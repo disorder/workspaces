@@ -1,0 +1,25 @@
+More about this experimental project at:
+
+	http://disorder.sk/stuff:independent-workspaces-for-multihead
+
+Primary repository:
+
+	http://orwell.fiit.stuba.sk/git?p=workspaces.git;a=summary
+
+Prototype of independent "workspace" switching for 2 displays:
+
+ - uses XGrabKey to catch shortcuts (ctrl+f1..4, win+1..4, win+tab)
+ - uses native workspaces, cuts them by displays and moves windows
+ - workspace 0 is always active(!), 4 other workspaces are for saving windows
+
+Implemented commands:
+
+ - set_loaded: set current loaded workspaces (restore after crash)
+ - switch: independent switching for 2 displays
+ - swap: swap windows on current native workspace between displays
+ - swap_displays: swap any combination of display/workspace
+
+More features:
+
+ - tries to restore window focus after switching
+ - retains workspace and window focus status between exits/crashes

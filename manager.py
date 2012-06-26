@@ -2,8 +2,6 @@
 
 from Xlib import display
 from screen import Screen
-import subprocess
-import re
 import xlib
 
 # TODO retain window focus?
@@ -11,16 +9,6 @@ import xlib
 # x = 10 = 2x5 = 5 is w of window border
 # y = 46 = 2x23 = 23 is h of window title bar
 # (both reported as .x/.y geometry, is this correct?)
-
-def run(cmd):
-    #subprocess.Popen(cmd.split())
-    # we have to wait because we need to process sequentially
-    subprocess.call(cmd.split())
-
-def output(cmd):
-    return subprocess.Popen(cmd.split(),stdout=subprocess.PIPE).communicate()[0]
-    # Python 2.7
-    #subprocess.check_output(cmd.split())
 
 class Window:
     def __init__(self,win,x,y,w,h,xrel,yrel,display):

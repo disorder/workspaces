@@ -3,8 +3,8 @@
 from Xlib import display
 from screen import Screen
 import xlib
+from time import sleep
 
-# TODO retain window focus?
 # TODO why are reported values +10 and +46?
 # x = 10 = 2x5 = 5 is w of window border
 # y = 46 = 2x23 = 23 is h of window title bar
@@ -21,7 +21,7 @@ class Manager:
         # windows will be moved to workspace 1 when switching
         self.loaded = [1, 1]
         self.history = [None, None]
-        self.focus = [4*[None], 4*[None]]
+        self.focus = [5*[None], 5*[None]]
 
         self.display = display
         # currently not really needed, event processing is sequential
@@ -96,12 +96,24 @@ class Manager:
 
     # swap workspace on display i - implemented for 2 horizontal displays
     def switch(self, i, target):
+        # we have to be on workspace 0 or else it's confusing to user
+        if xlib.get_current_desktop(self.display) != 0:
+            # TODO maybe switch to workspace 0?  it might be confusing too
+            #xlib.set_current_desktop(self.display, 0)
+            return
+
         self.update()
 
         if i>0 and len(self.screens) != 2: # unsupported
             return
         elif i>0 and self.screens[0].x == self.screens[1].x: # same offset
             return
+
+        # save focus
+        win = xlib.get_active_window(self.display)
+        if xlib.get_desktop(self.display, win) == 0:
+            # this rules out 0xffffffff
+            self.focus[i][self.loaded[i]] = win
 
         if target == self.loaded[i]:
             if self.history[i] != None: # swap back to previous workspace
@@ -124,6 +136,14 @@ class Manager:
 
         self.loaded[i] = target
         xlib.commit(self.display)
+
+        # load focus
+        win = self.focus[i][target]
+        if win:
+            # we have to wait for the windows to be moved
+            sleep(0.01)
+            xlib.set_active_window(self.display, win)
+            xlib.commit(self.display)
 
     # swap winddows between arbitrary independent workspaces
     def swap_displays(self, d1, w1, d2, w2):
@@ -204,3 +224,4 @@ if __name__ == "__main__":
     #m.swap()
     #m.swap_displays(1,1, 0,3)
     #m.switch(1, 2)
+ 

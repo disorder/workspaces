@@ -14,6 +14,7 @@
 from Xlib import display, X
 from grab import grab_key
 from manager import Manager
+import sys
 
 # TODO kinda lazy keyboard shortcuts (misses some?)
 # TODO retain workspace numbers somehow (without touching disk)
@@ -53,6 +54,11 @@ if __name__ == "__main__":
         grab_key(d, mod, key)
 
     m = Manager(d)
+
+    # set initial workspaces (useful after crash)
+    if len(sys.argv) == 3:
+        print 'setting initial workspaces to (%s, %s)' % (sys.argv[1],sys.argv[2])
+        m.set_loaded(int(sys.argv[1]), int(sys.argv[2]))
 
     # process events
     while True:

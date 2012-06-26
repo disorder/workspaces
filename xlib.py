@@ -63,6 +63,12 @@ def get_current_desktop(disp):
     # also
     #get_property_value(disp, '_WIN_WORKSPACE')
 
+def set_current_desktop(disp, desktop):
+    event_type = disp.intern_atom('_NET_CURRENT_DESKTOP')
+    mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
+    data = [desktop, 0, 0, 0, 0]
+    return send_event(disp, disp.screen().root, data, event_type, mask)
+
 def get_pid(disp, window):
     return get_window_property_value(disp, '_NET_WM_PID', window)
 
@@ -120,6 +126,9 @@ if __name__ == "__main__":
             print get_geometry(disp, win)
         print '%08x %08x' % (workspace, win)
         # 0xffffffff: show on all desktops
+
+    #set_current_desktop(disp, 0)
+    #set_current_desktop(disp, 2)
 
     # apply changes
     disp.close()

@@ -110,7 +110,7 @@ class Manager:
         for win in self.workspaces[b]:
             xlib.set_desktop(self.display, win.id, a)
 
-        xlib.commit(self.display)
+        self.display.sync()
 
     # swap windows on current displays - implemented for 2 horizontal displays
     def swap(self):
@@ -129,7 +129,7 @@ class Manager:
             y = self.screens[(i+1) % 2].y + rely - (2*win.yrel)
             xlib.moveresize(self.display, win.id, x, y)
 
-        xlib.commit(self.display)
+        self.display.sync()
 
     # swap workspace on display i - implemented for 2 horizontal displays
     def switch(self, i, target):
@@ -172,7 +172,7 @@ class Manager:
                 xlib.set_desktop(self.display, win.id, 0)
 
         self.loaded[i] = target
-        xlib.commit(self.display)
+        self.display.sync()
 
         self.save()
 
@@ -182,7 +182,7 @@ class Manager:
             # we have to wait for the windows to be moved
             sleep(0.01)
             xlib.set_active_window(self.display, win)
-            xlib.commit(self.display)
+            self.display.sync()
 
     # swap winddows between arbitrary independent workspaces
     def swap_displays(self, d1, w1, d2, w2):
@@ -219,7 +219,7 @@ class Manager:
 
                     xlib.moveresize(self.display, win.id, x, y)
 
-        xlib.commit(self.display)
+        self.display.sync()
 
     def command(self, cmd):
         if cmd[0] == 'switch':

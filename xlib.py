@@ -83,6 +83,7 @@ def get_geometry(disp, window):
     return (t.x, t.y, g.width, g.height, g.x, g.y)
 
 # apply changes
+# (not using this anymore, there is Display.sync() which does something similar)
 def commit(disp):
     # they get applied upon close or any reading, reopen is slower
     get_current_desktop(disp)

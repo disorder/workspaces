@@ -4,6 +4,8 @@ from Xlib import display
 from screen import Screen
 import xlib
 from time import sleep
+from shm import SHM
+import os
 
 # TODO why are reported values +10 and +46?
 # x = 10 = 2x5 = 5 is w of window border
@@ -17,14 +19,48 @@ class Window:
         self.d = display
 
 class Manager:
-    def __init__(self, display):
+    def __init__(self, display, store=None):
         # windows will be moved to workspace 1 when switching
         self.loaded = [1, 1]
         self.history = [None, None]
         self.focus = [5*[None], 5*[None]]
 
         self.display = display
-        # currently not really needed, event processing is sequential
+
+        if store:
+            self.store = SHM(store)
+            self.store.create()
+            self.store.attach()
+            self.load()
+        else:
+            self.store = None
+
+    def save(self):
+        if self.store:
+            s = '%s\n%s\0' % (str(self.loaded), str(self.focus))
+            self.store.write(s)
+
+    def load(self):
+        if not self.store:
+            return
+
+        state = str(self.store).splitlines()
+        if len(state) != 2:
+            self.store.write('\0')
+            print 'wiping invalid state %s' % state
+            return
+
+        print 'loading:\n', state
+        try: self.loaded = eval(state[0])
+        except:
+            self.store.write('\0')
+            raise
+        print 'loaded = ', self.loaded
+        try: self.focus = eval(state[1])
+        except:
+            self.store.write('\0')
+            raise
+        print 'focus = ', self.focus
 
     # load current WM state
     def update(self):
@@ -35,6 +71,7 @@ class Manager:
     # set arbitrary state for loaded desktop
     def set_loaded(self, a, b):
         self.loaded = [a, b]
+        self.save()
 
     # implemented for horizontal non-overlapping views
     # returns corresponding display for window
@@ -137,6 +174,8 @@ class Manager:
         self.loaded[i] = target
         xlib.commit(self.display)
 
+        self.save()
+
         # load focus
         win = self.focus[i][target]
         if win:
@@ -220,6 +259,7 @@ if __name__ == "__main__":
     m = Manager(display.Display())
     m.update()
     print m.workspaces
+    m = Manager(display.Display(), store='/')
     #m.swap_workspace(0,1)
     #m.swap()
     #m.swap_displays(1,1, 0,3)

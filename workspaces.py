@@ -10,14 +10,16 @@
 # - switch: independent switching for 2 displays
 # - swap: swap windows on current native workspace between displays
 # - swap_displays: swap any combination of display/workspace
+# more features:
+# - tries to restore winow focus after switching
+# - retains workspace and window focus status between exits/crashes
 
 from Xlib import display, X
 from grab import grab_key
 from manager import Manager
-import sys
+import sys, os
 
 # TODO kinda lazy keyboard shortcuts (misses some?)
-# TODO retain workspace numbers somehow (without touching disk)
 # TODO netwmpager has trouble with updates, xfce4-panel is ok
 
 ## CONFIGURATION
@@ -53,7 +55,7 @@ if __name__ == "__main__":
     for key, mod in keys:
         grab_key(d, mod, key)
 
-    m = Manager(d)
+    m = Manager(d, os.path.expanduser('~'))
 
     # set initial workspaces (useful after crash)
     if len(sys.argv) == 3:

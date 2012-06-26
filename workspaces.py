@@ -53,7 +53,6 @@ if __name__ == "__main__":
         grab_key(d, mod, key)
 
     m = Manager(d)
-    m.set_loaded(2,1)
 
     # process events
     while True:
@@ -68,5 +67,5 @@ if __name__ == "__main__":
             if cmd[0] == 'swap':
                 m.swap()
             elif cmd[0] == 'switch':
-                #m.switch(cmd[1], cmd[2])
+                m.switch(cmd[1], cmd[2])
                 print m.loaded

@@ -46,24 +46,27 @@ class AutoList(list):
         else:
             super(AutoList, self).__setitem__(i, value)
 
-class Manager:
-    def __init__(self, display, store=None):
+class Manager(object):
+    def __init__(self, display, store=None, proj_id=1):
+        self.display = display
+
         # windows will be moved to workspace 0 when switching
-        self.loaded = AutoList(1)
+        self.init_loaded()
         # previous loaded workspaces
         self.history = AutoList()
         # window focuses for each [display][workspace]
         self.focus = AutoList(AutoList)
 
-        self.display = display
-
         if store:
-            self.store = SHM(store)
+            self.store = SHM(store, proj_id=proj_id)
             self.store.create()
             self.store.attach()
             self.load()
         else:
             self.store = None
+
+    def init_loaded(self):
+        self.loaded = AutoList(1)
 
     def save(self):
         if self.store:
@@ -111,8 +114,10 @@ class Manager:
         self.update_windows()        
 
     # set arbitrary state for loaded desktop
-    def set_loaded(self, a, b):
-        self.loaded = [a, b]
+    def set_loaded(self, loaded):
+        self.init_loaded()
+        for i in xrange(len(loaded)):
+            self.loaded[i] = loaded[i]
         self.save()
 
     # implemented for horizontal non-overlapping views
@@ -233,11 +238,6 @@ class Manager:
 
         self.update()
 
-        if len(self.screens) != 2: # unsupported
-            return
-        if self.screens[0].x == self.screens[1].x: # same offset
-            return
-
         for win in self.workspaces[w1]:
             if win.d == d1:
                 xlib.set_desktop(self.display, win.id, w2)
@@ -296,12 +296,116 @@ class Manager:
                     return
                 self.set_loaded(a, b)
 
+class Manager0(Manager):
+    # because of self.loaded behaviour we need another SHM (proj_id=2)
+    def __init__(self, display, store=None, proj_id=2):
+        super(Manager0, self).__init__(display, store, proj_id)
+
+    def init_loaded(self):
+        self.loaded = AutoList(0)
+
+    # alternative version - uses only half (index 0)
+    # swap workspace on display i
+    def switch(self, i, target, update=True):
+        # we have to be on workspace 0 or else it's confusing to user
+        if xlib.get_current_desktop(self.display) != 0:
+            xlib.set_current_desktop(self.display, 0)
+
+        if update:
+            self.update()
+
+        # TODO should work for more displays, i can't test it
+        # TODO even with mirrored if get_screens leaves them out
+        if i>0:
+            # screens are sorted by x, this will return if there is mirrored
+            for j in xrange(1, len(self.screens)):
+                if self.screens[j-1].x == self.screens[j].x: # same offset
+                    return
+
+        # save focus
+        win = xlib.get_active_window(self.display)
+        if xlib.get_desktop(self.display, win) == 0:
+            # this rules out 0xffffffff
+            self.focus[0][self.loaded[i]] = win
+
+        if target == self.loaded[i]:            
+            if self.history[i] != None: # swap back to previous workspace
+                target = self.history[i]
+                self.history[i] = self.loaded[i]
+            else: # nowhere to switch, it's already loaded
+                return
+        else: # just update history
+            # if we still have initial value, ignore
+            if self.loaded[i] != 0:
+                self.history[i] = self.loaded[i]
+
+        try:
+            # already loaded elsewhere (it can't be us)
+            where = self.loaded.index(target)
+            # don't do just swap(), swap arbitrary display numbers
+            self.swap_displays(i, 0, where, 0)
+            self.loaded[where] = self.loaded[i]
+            self.loaded[i] = target
+            return
+        except ValueError:
+            # continue
+            pass
+
+        # save (we use whole workspace on display 0 for storing windows)
+        for win in self.workspaces[0]:
+            if win.d == i:
+                xlib.set_desktop(self.display, win.id, self.loaded[i])
+                # move window, we changed displays
+                if win.d != 0:
+                    relx = win.x - self.screens[i].x
+                    rely = win.y - self.screens[i].y
+                    x = self.screens[0].x + relx - (2*win.xrel)
+                    y = self.screens[0].y + rely - (2*win.yrel)
+
+                    xlib.moveresize(self.display, win.id, x, y)
+
+        # load workspace
+        for win in self.workspaces[target]:
+            # we are using screen 0, ignore windows outside
+            if win.d == 0:
+                xlib.set_desktop(self.display, win.id, 0)
+                # move window, we changed displays
+                if win.d != i:
+                    relx = win.x - self.screens[0].x
+                    rely = win.y - self.screens[0].y
+                    x = self.screens[i].x + relx - (2*win.xrel)
+                    y = self.screens[i].y + rely - (2*win.yrel)
+
+                    xlib.moveresize(self.display, win.id, x, y)
+
+        self.loaded[i] = target
+        self.display.sync()
+
+        self.save()
+
+        # load focus
+        win = self.focus[i][target]
+        if win:
+            # we have to wait for the windows to be moved
+            sleep(0.01)
+            xlib.set_active_window(self.display, win)
+            self.display.sync()    
 
 if __name__ == "__main__":
     m = Manager(display.Display())
     m.update()
     print m.workspaces
     m = Manager(display.Display(), store='/')
+    print m.focus[3]
+    print m.focus
+    print m.history[3]
+    print m.loaded[3]
+    m = Manager0(display.Display(), store='/')
+    print m.focus[3]
+    print m.focus
+    print m.history[3]
+    print m.loaded[3]
+    
     #m.swap_workspace(0,1)
     #m.swap()
     #m.swap_displays(1,1, 0,3)

@@ -3,7 +3,7 @@
 
 from Xlib import display, X
 from grab import grab_key
-from manager import Manager
+from manager import Manager, Manager0
 import sys, os
 
 ## CONFIGURATION
@@ -31,6 +31,11 @@ def build_keys(shortcuts):
                 keys[(mod, codes[workspace])] = ('switch', monitor, workspace+1)
     return keys
 
+def usage():
+    print("Usage: %s options [initial workspaces]\n" % sys.argv[0])
+    print(" -h --help               Display this usage information.\n"
+          " -m --mode <full|part>   Manager mode.\n")
+
 if __name__ == "__main__":
     d = display.Display()
 
@@ -41,12 +46,44 @@ if __name__ == "__main__":
     for key, mod in keys:
         grab_key(d, mod, key)
 
-    m = Manager(d, os.path.expanduser('~'))
+    import getopt
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hm:', ['help', 'mode='])
+    except getopt.GetoptError, err:
+        print str(err)
+        exit(1)
+
+    manager = Manager0
+    for o, a in opts:
+        if o in ('-h', '--help'):
+            usage()
+            exit()
+        elif o in ('-m', '--mode'):
+            if a == 'full':
+                manager = Manager
+            elif a == 'part':
+                manager = Manager0
+            else:
+                print 'invalid mode "%s"' % a
+                usage()
+                exit(1)
+        else:
+            assert False, "unhandled option"
+
+    if manager == Manager:
+        print 'using full workspaces: (N-1)*2 independent workspaces'
+    elif manager == Manager0:
+        print 'using partial workspaces: (N-1) independent workspaces'
+
+    #m = Manager(d, os.path.expanduser('~'))
+    m = manager(d, os.path.expanduser('~'))
+    print m.loaded
 
     # set initial workspaces (useful after crash)
-    if len(sys.argv) == 3:
-        print 'setting initial workspaces to (%s, %s)' % (sys.argv[1],sys.argv[2])
-        m.set_loaded(int(sys.argv[1]), int(sys.argv[2]))
+    if len(args) > 0:
+        print 'setting initial workspaces to', args
+        loaded = map(int, args)
+        m.set_loaded(loaded)
 
     # process events
     while True:

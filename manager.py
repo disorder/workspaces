@@ -18,12 +18,42 @@ class Window:
         self.x, self.y, self.w, self.h, self.xrel, self.yrel = x,y,w,h,xrel,yrel
         self.d = display
 
+# automatically growing list
+class AutoList(list):
+    def __init__(self, item=None):
+        super(AutoList, self).__init__()
+        self.item = item
+        self.callable = callable(item)
+
+    def __getitem__(self, i):
+        if i >= len(self):
+            if self.callable:
+                self.__setitem__(i, self.item())
+                return self[i]
+            else:
+                return self.item
+        else:
+            return super(AutoList, self).__getitem__(i)
+
+    def __setitem__(self, i, value):
+        if i >= len(self):
+            for j in xrange(len(self), i):
+                if self.callable:
+                    self.append(self.item())
+                else:
+                    self.append(self.item)
+            self.append(value)
+        else:
+            super(AutoList, self).__setitem__(i, value)
+
 class Manager:
     def __init__(self, display, store=None):
-        # windows will be moved to workspace 1 when switching
-        self.loaded = [1, 1]
-        self.history = [None, None]
-        self.focus = [5*[None], 5*[None]]
+        # windows will be moved to workspace 0 when switching
+        self.loaded = AutoList(1)
+        # previous loaded workspaces
+        self.history = AutoList()
+        # window focuses for each [display][workspace]
+        self.focus = AutoList(AutoList)
 
         self.display = display
 
@@ -51,16 +81,28 @@ class Manager:
             return
 
         print 'loading:\n', state
-        try: self.loaded = eval(state[0])
+        try:
+            parsed = eval(state[0])
+            # copy items
+            for i in parsed:
+                self.loaded.append(i)
+            print 'loaded = ', self.loaded
         except:
             self.store.write('\0')
             raise
-        print 'loaded = ', self.loaded
-        try: self.focus = eval(state[1])
+
+        try:
+            parsed = eval(state[1])
+            # copy items
+            for i in xrange(len(parsed)):
+                for j in xrange(len(parsed[i])):
+                    if parsed[i][j]:
+                        self.focus[i][j] = parsed[i][j]
+
+            print 'focus = ', self.focus
         except:
             self.store.write('\0')
             raise
-        print 'focus = ', self.focus
 
     # load current WM state
     def update(self):

@@ -46,6 +46,10 @@ class AutoList(list):
         else:
             super(AutoList, self).__setitem__(i, value)
 
+    def trunc(self, n):
+        for i in xrange(n, len(self)):
+            self.pop()
+
 class Manager(object):
     def __init__(self, display, store=None, proj_id=1):
         self.display = display
@@ -140,13 +144,18 @@ class Manager(object):
 
     # update workspace list
     def update_workspaces(self):
-        self.workspaces = [[] for i in xrange(xlib.get_number_of_desktops(self.display))]
+        num = xlib.get_number_of_desktops(self.display)
+        self.workspaces = [[] for i in xrange(num)]
         # normally should be 0 (always active workspace)
         self.current = xlib.get_current_desktop(self.display)
 
     # update displays
     def update_screens(self):
         self.screens = Screen.get_screens(self.display)
+        num = len(self.screens)
+        if num < len(self.loaded):
+            self.loaded.trunc(num)
+            self.history.trunc(num)
 
     # swap whole workspaces
     def swap_workspace(self, a, b):

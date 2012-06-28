@@ -7,10 +7,18 @@ Primary repository:
 	http://orwell.fiit.stuba.sk/git?p=workspaces.git;a=summary
 
 Prototype of independent "workspace" switching for 2 displays:
-
  - uses XGrabKey to catch shortcuts (ctrl+f1..4, win+1..4, win+tab)
- - uses native workspaces, cuts them by displays and moves windows
  - workspace 0 is always active(!), 4 other workspaces are for saving windows
+ - mode "part" (default):
+   - uses native workspaces, moves windows to display 0 when switching
+     (workspaces are shared for both displays)
+   - when disconnecting output, only windows on active workspace will be moved
+     by window manager
+   - (N-1) independent workspaces
+ - mode "full":
+   - uses native workspaces, cuts them by displays and moves windows
+   - you can swap windows between active workspaces
+   - (N-1)*2 independent workspaces
 
 Implemented commands:
 

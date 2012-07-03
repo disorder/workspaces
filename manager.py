@@ -144,8 +144,7 @@ class Manager(object):
 
     # update workspace list
     def update_workspaces(self):
-        num = xlib.get_number_of_desktops(self.display)
-        self.workspaces = [[] for i in xrange(num)]
+        self.workspaces = AutoList(AutoList)
         # normally should be 0 (always active workspace)
         self.current = xlib.get_current_desktop(self.display)
 
@@ -315,13 +314,12 @@ class Manager0(Manager):
 
     # alternative version - uses only half (index 0)
     # swap workspace on display i
-    def switch(self, i, target, update=True):
+    def switch(self, i, target):
         # we have to be on workspace 0 or else it's confusing to user
         if xlib.get_current_desktop(self.display) != 0:
             xlib.set_current_desktop(self.display, 0)
 
-        if update:
-            self.update()
+        self.update()
 
         # TODO should work for more displays, i can't test it
         # TODO even with mirrored if get_screens leaves them out
@@ -398,7 +396,11 @@ class Manager0(Manager):
             # we have to wait for the windows to be moved
             sleep(0.01)
             xlib.set_active_window(self.display, win)
-            self.display.sync()    
+            self.display.sync()
+            # sometimes it fails, again
+            sleep(0.2)
+            xlib.set_active_window(self.display, win)
+            self.display.sync()
 
 if __name__ == "__main__":
     m = Manager(display.Display())

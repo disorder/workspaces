@@ -115,7 +115,7 @@ class Manager(object):
     def update(self):
         self.update_screens()
         self.update_workspaces()
-        self.update_windows()        
+        self.update_windows()
 
     # set arbitrary state for loaded desktop
     def set_loaded(self, loaded):
@@ -321,6 +321,10 @@ class Manager0(Manager):
 
         self.update()
 
+        # are we trying to switch non-existing screen?
+        if i >= len(self.screens):
+            return
+
         # TODO should work for more displays, i can't test it
         # TODO even with mirrored if get_screens leaves them out
         if i>0:
@@ -335,7 +339,7 @@ class Manager0(Manager):
             # this rules out 0xffffffff
             self.focus[0][self.loaded[i]] = win
 
-        if target == self.loaded[i]:            
+        if target == self.loaded[i]:
             if self.history[i] != None: # swap back to previous workspace
                 target = self.history[i]
                 self.history[i] = self.loaded[i]
@@ -416,9 +420,9 @@ if __name__ == "__main__":
     print m.focus
     print m.history[3]
     print m.loaded[3]
-    
+
     #m.swap_workspace(0,1)
     #m.swap()
     #m.swap_displays(1,1, 0,3)
     #m.switch(1, 2)
- 
+

@@ -3,7 +3,7 @@
 from Xlib import X
 
 def error(*x): print 'error', x
-def grab_key(display, key, mod, owner_events=False,
+def grab_key(display, mod, key, owner_events=False,
              pointer_mode=X.GrabModeAsync, keyboard_mode=X.GrabModeAsync,
              onerror=None):
     if not onerror:

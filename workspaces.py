@@ -43,7 +43,7 @@ if __name__ == "__main__":
     keys = build_keys(shortcuts)
     keys[swap] = ('swap',)
     # grab keys
-    for key, mod in keys:
+    for mod, key in keys:
         grab_key(d, mod, key)
 
     import getopt

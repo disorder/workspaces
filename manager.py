@@ -135,7 +135,11 @@ class Manager(object):
     # update window list
     def update_windows(self):
         for win in xlib.get_windows(self.display):
-            d = xlib.get_desktop(self.display, win)
+            try:
+                d = xlib.get_desktop(self.display, win)
+            except Xlib.error.BadWindow:
+                # crashes in create_resource_object.get_full_property sometimes
+                continue
             if d != 0xffffffff:
                 geom = xlib.get_geometry(self.display, win)
                 screen = self.get_screen(geom[0])

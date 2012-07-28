@@ -207,9 +207,12 @@ class Manager(object):
 
         # save focus
         win = xlib.get_active_window(self.display)
-        if xlib.get_desktop(self.display, win) == 0:
-            # this rules out 0xffffffff
-            self.focus[i][self.loaded[i]] = win
+        try:
+            if xlib.get_desktop(self.display, win) == 0:
+                # this rules out 0xffffffff
+                self.focus[i][self.loaded[i]] = win
+        except Xlib.error.BadWindow:
+            pass
 
         if target == self.loaded[i]:
             if self.history[i] != None: # swap back to previous workspace
@@ -339,9 +342,12 @@ class Manager0(Manager):
 
         # save focus
         win = xlib.get_active_window(self.display)
-        if xlib.get_desktop(self.display, win) == 0:
-            # this rules out 0xffffffff
-            self.focus[0][self.loaded[i]] = win
+        try:
+            if xlib.get_desktop(self.display, win) == 0:
+                # this rules out 0xffffffff
+                self.focus[0][self.loaded[i]] = win
+        except Xlib.error.BadWindow:
+            pass
 
         if target == self.loaded[i]:
             if self.history[i] != None: # swap back to previous workspace

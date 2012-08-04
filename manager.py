@@ -1,6 +1,6 @@
 # Copyright (C) 2012  Adam Sloboda
 
-from Xlib import display
+from Xlib import display, error
 from screen import Screen
 import xlib
 from time import sleep
@@ -137,7 +137,7 @@ class Manager(object):
         for win in xlib.get_windows(self.display):
             try:
                 d = xlib.get_desktop(self.display, win)
-            except Xlib.error.BadWindow:
+            except error.BadWindow:
                 # crashes in create_resource_object.get_full_property sometimes
                 continue
             if d != 0xffffffff:
@@ -211,7 +211,7 @@ class Manager(object):
             if xlib.get_desktop(self.display, win) == 0:
                 # this rules out 0xffffffff
                 self.focus[i][self.loaded[i]] = win
-        except Xlib.error.BadWindow:
+        except error.BadWindow:
             pass
 
         if target == self.loaded[i]:
@@ -346,7 +346,7 @@ class Manager0(Manager):
             if xlib.get_desktop(self.display, win) == 0:
                 # this rules out 0xffffffff
                 self.focus[0][self.loaded[i]] = win
-        except Xlib.error.BadWindow:
+        except error.BadWindow:
             pass
 
         if target == self.loaded[i]:

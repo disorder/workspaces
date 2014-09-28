@@ -20,6 +20,8 @@ shortcuts = ( # 2 displays
 
 # win+tab
 swap = (X.Mod4Mask, 23)
+# win+`
+clear = (X.Mod4Mask, 49)
 
 ## CODE
 
@@ -42,6 +44,7 @@ if __name__ == "__main__":
     # build dict from configuration
     keys = build_keys(shortcuts)
     keys[swap] = ('swap',)
+    keys[clear] = ('clear',)
     # grab keys
     for mod, key in keys:
         grab_key(d, mod, key)
@@ -91,12 +94,15 @@ if __name__ == "__main__":
         if event.type & X.KeyPressMask:
             try:
                 cmd = keys[(event.state, event.detail)]
-                print cmd
+                #print cmd
             except KeyError:
                 continue
 
             if cmd[0] == 'swap':
                 m.swap()
+            elif cmd[0] == 'clear':
+                # clears right display
+                m.clear()
             elif cmd[0] == 'switch':
                 m.switch(cmd[1], cmd[2])
-                print m.loaded
+                #print m.loaded

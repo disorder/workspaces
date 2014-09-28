@@ -26,6 +26,7 @@ Implemented commands:
  - switch: independent switching for 2 displays
  - swap: swap windows on current native workspace between displays
  - swap_displays: swap any combination of display/workspace
+ - clear: unload/load right desktop to allow turning off secondary display
 
 More features:
 

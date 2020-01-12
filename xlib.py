@@ -79,7 +79,8 @@ def get_geometry(disp, window):
     w = disp.create_resource_object('window', window)
     w.map()
     g = w.get_geometry()
-    t = g.root.translate_coords(w, g.x, g.y)
+    # subtract title height and left border width
+    t = g.root.translate_coords(w, -g.x, -g.y)
     return (t.x, t.y, g.width, g.height, g.x, g.y)
 
 # apply changes

@@ -7,10 +7,6 @@ from time import sleep
 from shm import SHM
 import os
 
-# TODO why are reported values +10 and +46?
-# x = 10 = 2x5 = 5 is w of window border
-# y = 46 = 2x23 = 23 is h of window title bar
-# (both reported as .x/.y geometry, is this correct?)
 
 class Window:
     def __init__(self,win,x,y,w,h,xrel,yrel,display):

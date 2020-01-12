@@ -1,5 +1,6 @@
 # Copyright (C) 2012  Adam Sloboda
 
+import logging
 from Xlib import display, error
 from screen import Screen
 import xlib
@@ -180,8 +181,8 @@ class Manager(object):
             i = win.d
             relx = win.x - self.screens[i].x
             rely = win.y - self.screens[i].y
-            x = self.screens[(i+1) % 2].x + relx - (2*win.xrel)
-            y = self.screens[(i+1) % 2].y + rely - (2*win.yrel)
+            x = self.screens[(i+1) % 2].x + relx
+            y = self.screens[(i+1) % 2].y + rely
             xlib.moveresize(self.display, win.id, x, y)
 
         self.display.sync()
@@ -200,8 +201,10 @@ class Manager(object):
         self.update()
 
         if i>0 and len(self.screens) != 2: # unsupported
+            logging.warning('unsupported number of screens: %d, bailing', len(self.screens))
             return
         elif i>0 and self.screens[0].x == self.screens[1].x: # same offset
+            logging.warning('overlapping screens, bailing')
             return
 
         # save focus
@@ -259,8 +262,8 @@ class Manager(object):
                 if d1 != d2:
                     relx = win.x - self.screens[d1].x
                     rely = win.y - self.screens[d1].y
-                    x = self.screens[d2].x + relx - (2*win.xrel)
-                    y = self.screens[d2].y + rely - (2*win.yrel)
+                    x = self.screens[d2].x + relx
+                    y = self.screens[d2].y + rely
 
                     xlib.moveresize(self.display, win.id, x, y)
         for win in self.workspaces[w2]:
@@ -270,8 +273,8 @@ class Manager(object):
                 if d1 != d2:
                     relx = win.x - self.screens[d2].x
                     rely = win.y - self.screens[d2].y
-                    x = self.screens[d1].x + relx - (2*win.xrel)
-                    y = self.screens[d1].y + rely - (2*win.yrel)
+                    x = self.screens[d1].x + relx
+                    y = self.screens[d1].y + rely
 
                     xlib.moveresize(self.display, win.id, x, y)
 
@@ -323,12 +326,14 @@ class Manager0(Manager):
     def switch(self, i, target):
         # we have to be on workspace 0 or else it's confusing to user
         if xlib.get_current_desktop(self.display) != 0:
+            logging.warning('forcing desktop 0')
             xlib.set_current_desktop(self.display, 0)
 
         self.update()
 
         # are we trying to switch non-existing screen?
         if i >= len(self.screens):
+            logging.warning('screen %d does not exist: %s', i, self.screens)
             return
 
         # TODO should work for more displays, i can't test it
@@ -337,11 +342,16 @@ class Manager0(Manager):
             # screens are sorted by x, this will return if there is mirrored
             for j in xrange(1, len(self.screens)):
                 if self.screens[j-1].x == self.screens[j].x: # same offset
+                    logging.warning('mirrored screen detected')
+                    return
+                if self.screens[j-1].x + self.screens[j-1].w > self.screens[j].x: # overlap
+                    logging.warning('overlapping screen detected')
                     return
 
+        loaded = self.loaded[:]
         if self.loaded[i] == None:
             # nothing is loaded
-            pass
+            logging.debug('no screen loaded on display %d', i)
         else:
             # save focus
             win = xlib.get_active_window(self.display)
@@ -370,6 +380,8 @@ class Manager0(Manager):
                 self.swap_displays(i, 0, where, 0)
                 self.loaded[where] = self.loaded[i]
                 self.loaded[i] = target
+                self.save()
+                logging.debug('swap_displays %s => %s', loaded, self.loaded)
                 return
             except ValueError:
                 # continue
@@ -383,8 +395,8 @@ class Manager0(Manager):
                     if win.d != 0:
                         relx = win.x - self.screens[i].x
                         rely = win.y - self.screens[i].y
-                        x = self.screens[0].x + relx - (2*win.xrel)
-                        y = self.screens[0].y + rely - (2*win.yrel)
+                        x = self.screens[0].x + relx
+                        y = self.screens[0].y + rely
 
                         xlib.moveresize(self.display, win.id, x, y)
 
@@ -397,8 +409,8 @@ class Manager0(Manager):
                 if win.d != i:
                     relx = win.x - self.screens[0].x
                     rely = win.y - self.screens[0].y
-                    x = self.screens[i].x + relx - (2*win.xrel)
-                    y = self.screens[i].y + rely - (2*win.yrel)
+                    x = self.screens[i].x + relx
+                    y = self.screens[i].y + rely
 
                     xlib.moveresize(self.display, win.id, x, y)
 
@@ -418,6 +430,8 @@ class Manager0(Manager):
             sleep(0.2)
             xlib.set_active_window(self.display, win)
             self.display.sync()
+
+        logging.debug('switch %s => %s', loaded, self.loaded)
 
     # clear windows on right display - implemented for 2 horizontal displays
     def clear(self):
@@ -441,8 +455,8 @@ class Manager0(Manager):
                 if win.d != 0:
                     relx = win.x - self.screens[i].x
                     rely = win.y - self.screens[i].y
-                    x = self.screens[0].x + relx - (2*win.xrel)
-                    y = self.screens[0].y + rely - (2*win.yrel)
+                    x = self.screens[0].x + relx
+                    y = self.screens[0].y + rely
 
                     xlib.moveresize(self.display, win.id, x, y)
 

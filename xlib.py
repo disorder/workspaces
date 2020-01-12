@@ -81,6 +81,7 @@ def get_geometry(disp, window):
     g = w.get_geometry()
     # subtract title height and left border width
     t = g.root.translate_coords(w, -g.x, -g.y)
+    # window position x y, width, height, border width, title bar height
     return (t.x, t.y, g.width, g.height, g.x, g.y)
 
 # apply changes

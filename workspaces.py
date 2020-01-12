@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # Copyright (C) 2012  Adam Sloboda
 
+import logging
 from Xlib import display, X
 from grab import grab_key
 from manager import Manager, Manager0
 import sys, os
+
 
 ## CONFIGURATION
 
@@ -51,7 +53,7 @@ if __name__ == "__main__":
 
     import getopt
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hm:', ['help', 'mode='])
+        opts, args = getopt.getopt(sys.argv[1:], 'hL:m:', ['help', 'loglevel=', 'mode='])
     except getopt.GetoptError, err:
         print str(err)
         exit(1)
@@ -61,6 +63,8 @@ if __name__ == "__main__":
         if o in ('-h', '--help'):
             usage()
             exit()
+        elif o in ('-L', '--loglevel'):
+            logging.getLogger().setLevel(a)
         elif o in ('-m', '--mode'):
             if a == 'full':
                 manager = Manager
@@ -94,7 +98,7 @@ if __name__ == "__main__":
         if event.type & X.KeyPressMask:
             try:
                 cmd = keys[(event.state, event.detail)]
-                #print cmd
+                logging.debug(cmd)
             except KeyError:
                 continue
 

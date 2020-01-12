@@ -14,7 +14,17 @@ class Screen:
     def get_screens(display):
         screens = []
         for s in display.xinerama_query_screens().screens:
-            screens.append(Screen(s['width'], s['height'], s['x'], s['y']))
+            # hack: i am keeping third (LVDS) on and overlapping, skip
+            # without this switching works only for leftmost display
+            # (overlap is not handled)
+            for i, screen in enumerate(screens):
+                if screen.x == s['x']:
+                    # keep larger
+                    if s['height'] > screen.h:
+                        screens[i] = Screen(s['width'], s['height'], s['x'], s['y'])
+                    break
+            else:
+                screens.append(Screen(s['width'], s['height'], s['x'], s['y']))
         return sorted(screens, key=attrgetter('x'))
 
 if __name__ == "__main__":

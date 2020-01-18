@@ -138,6 +138,7 @@ class Manager(object):
                 # crashes in create_resource_object.get_full_property sometimes
                 continue
             if d != 0xffffffff:
+                # BEWARE: this causes rolled up window to take focus (xfwm4)
                 geom = xlib.get_geometry(self.display, win)
                 screen = self.get_screen(geom[0])
                 # win_id, x, y, w, h, xrel, yrel, display
@@ -329,6 +330,10 @@ class Manager0(Manager):
             logging.warning('forcing desktop 0')
             xlib.set_current_desktop(self.display, 0)
 
+        # ask for focus now, update_windows causes rolled windows to take focus
+        # it's less calls than trying to restore focus in update
+        # TODO rolled windows are always above but below focused window
+        win = xlib.get_active_window(self.display)
         self.update()
 
         # are we trying to switch non-existing screen?
@@ -354,7 +359,7 @@ class Manager0(Manager):
             logging.debug('no screen loaded on display %d', i)
         else:
             # save focus
-            win = xlib.get_active_window(self.display)
+            #win = xlib.get_active_window(self.display)
             try:
                 if xlib.get_desktop(self.display, win) == 0:
                     # this rules out 0xffffffff

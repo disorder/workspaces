@@ -50,6 +50,10 @@ if __name__ == "__main__":
     # grab keys
     for mod, key in keys:
         grab_key(d, mod, key)
+        # add caps and num lock combinations
+        grab_key(d, mod | X.LockMask, key)
+        grab_key(d, mod | X.Mod2Mask, key)
+        grab_key(d, mod | X.LockMask | X.Mod2Mask, key)
 
     import getopt
     try:
@@ -97,7 +101,9 @@ if __name__ == "__main__":
         event = d.next_event()
         if event.type & X.KeyPressMask:
             try:
-                cmd = keys[(event.state, event.detail)]
+                # ignore caps and num lock
+                state = event.state & ~X.LockMask & ~X.Mod2Mask
+                cmd = keys[(state, event.detail)]
                 logging.debug(cmd)
             except KeyError:
                 continue

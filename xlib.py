@@ -93,17 +93,17 @@ def commit(disp):
 if __name__ == "__main__":
     from Xlib import display
     disp = display.Display()
-    print get_active_window(disp)
-    print get_current_desktop(disp), get_number_of_desktops(disp)
-    print get_property(disp, '_NET_DESKTOP_NAMES').value.split('\x00')
-    print get_property(disp, '_NET_CLIENT_LIST').value
+    print(get_active_window(disp))
+    print(get_current_desktop(disp), get_number_of_desktops(disp))
+    print(get_property(disp, '_NET_DESKTOP_NAMES').value.split('\x00'))
+    print(get_property(disp, '_NET_CLIENT_LIST').value)
 
     #moveresize(disp, 65354518, 50, 420, 580, 320)
     moveresize(disp, 65354518, 50, 420, -1, -1)
 
-    #print set_desktop(disp, 65354518, 3)
+    #print(set_desktop(disp, 65354518, 3))
     # get desktop ID of window (makes window_to_desktop work?)
-    #print get_window_property_value(disp, '_NET_WM_DESKTOP', 65354518)
+    #print(get_window_property_value(disp, '_NET_WM_DESKTOP', 65354518))
     # or this activates change
     #disp.create_resource_object('window', 65354518).map()
     #disp.create_resource_object('window', disp.screen().root).map()
@@ -114,20 +114,20 @@ if __name__ == "__main__":
     #disp.create_resource_object('window', 0x00e00013).raise_window()
     #set_active_window(disp, 65354518)
     # this also makes work set_active_window and returns value
-    #print get_active_window(disp)
+    #print(get_active_window(disp))
 
-    #print get_pid(disp, 0x00e00013)
-    #print get_desktop(disp, 0x00e00013)
+    #print(get_pid(disp, 0x00e00013))
+    #print(get_desktop(disp, 0x00e00013))
 
-    #print get_geometry(disp, 0x00e00013)
+    #print(get_geometry(disp, 0x00e00013))
     # there are more (border_width)
-    #print disp.create_resource_object('window', 0x00e00013).get_geometry()
+    #print(disp.create_resource_object('window', 0x00e00013).get_geometry())
 
     for win in get_windows(disp):
         workspace = get_desktop(disp, win)
         if workspace != 0xffffffff:
-            print get_geometry(disp, win)
-        print '%08x %08x' % (workspace, win)
+            print(get_geometry(disp, win))
+        print('%08x %08x' % (workspace, win))
         # 0xffffffff: show on all desktops
 
     #set_current_desktop(disp, 0)

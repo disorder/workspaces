@@ -29,4 +29,4 @@ class Screen:
 
 if __name__ == "__main__":
     from Xlib import display
-    print Screen.get_screens(display.Display())
+    print(Screen.get_screens(display.Display()))

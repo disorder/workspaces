@@ -2,19 +2,20 @@
 
 from ctypes import *
 from ctypes.util import find_library
+import six
 
 class SHM:
     # linux/ipc.h or bits/ipc.h
-    IPC_CREAT = 01000
-    IPC_EXCL = 02000
-    IPC_NOWAIT = 02000
+    IPC_CREAT = 0o1000
+    IPC_EXCL = 0o2000
+    IPC_NOWAIT = 0o2000
 
     IPC_RMID = 0
 
     # fn file has to exist
     def __init__(self, fn, proj_id=1, size=4096):
         libcname=find_library("c")
-        print 'loading C library:', libcname
+        print('loading C library:', libcname)
         self.libc = CDLL(libcname)
 
         self.mem = None
@@ -23,7 +24,7 @@ class SHM:
 
         self.key = self.libc.ftok(fn, proj_id)
         if self.key == -1:
-            print 'ftok failed for "%s"' % fn
+            print('ftok failed for "%s"' % fn)
             self.libc.perror('ftok')
             raise
 
@@ -31,25 +32,31 @@ class SHM:
         self.create()
 
     def __str__(self):
-        return string_at(self.mem)
+        s = string_at(self.mem)
+        if six.PY2:
+            return s
+        else:
+            return s.decode('utf-8')
 
     def write(self, s):
+        if not six.PY2:
+            s = s.encode('utf-8')
         memmove(self.mem, s, len(s))
 
     def create(self):
         shmid = self.libc.shmget(self.key, self.size,
-                                 0666 | SHM.IPC_CREAT | SHM.IPC_EXCL)
+                                 0o666 | SHM.IPC_CREAT | SHM.IPC_EXCL)
         if shmid == -1:
             self.libc.perror('shmget1')
-            print 'key 0x%08x already exists' % self.key
+            print('key 0x%08x already exists' % self.key)
             shmid = self.libc.shmget(self.key, self.size, 0)
 
         if shmid == -1:
             self.libc.perror('shmget2')
-            print 'no shm found'
+            print('no shm found')
             raise
 
-        print 'shmid = 0x%08x' % shmid
+        print('shmid = 0x%08x' % shmid)
         self.shmid = shmid
 
     def attach(self):
@@ -76,12 +83,12 @@ if __name__ == "__main__":
     s.attach()
 
     import random
-    print s.mem[0]
+    print(s.mem[0])
     s.mem[0] = chr(random.randint(ord('A'), ord('Z')))
-    print s.mem[0]
+    print(s.mem[0])
 
     memmove(s.mem, 'lala\0', 5)
-    print str(s)
+    print(str(s))
 
     s.detach()
     s.remove()

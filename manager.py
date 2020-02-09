@@ -23,7 +23,9 @@ class AutoList(list):
         self.callable = callable(item)
 
     def __getitem__(self, i):
-        if i >= len(self):
+        if isinstance(i, slice):
+            return super(AutoList, self).__getitem__(i)
+        elif i >= len(self):
             if self.callable:
                 self.__setitem__(i, self.item())
                 return self[i]
@@ -34,7 +36,7 @@ class AutoList(list):
 
     def __setitem__(self, i, value):
         if i >= len(self):
-            for j in xrange(len(self), i):
+            for j in range(len(self), i):
                 if self.callable:
                     self.append(self.item())
                 else:
@@ -44,7 +46,7 @@ class AutoList(list):
             super(AutoList, self).__setitem__(i, value)
 
     def trunc(self, n):
-        for i in xrange(n, len(self)):
+        for i in range(n, len(self)):
             self.pop()
 
 class Manager(object):
@@ -80,17 +82,18 @@ class Manager(object):
 
         state = str(self.store).splitlines()
         if len(state) != 2:
+            print(state)
             self.store.write('\0')
-            print 'wiping invalid state %s' % state
+            print('wiping invalid state %s' % state)
             return
 
-        print 'loading:\n', state
+        print('loading:\n', state)
         try:
             parsed = eval(state[0])
             # copy items
             for i in parsed:
                 self.loaded.append(i)
-            print 'loaded = ', self.loaded
+            print('loaded = ', self.loaded)
         except:
             self.store.write('\0')
             raise
@@ -98,12 +101,12 @@ class Manager(object):
         try:
             parsed = eval(state[1])
             # copy items
-            for i in xrange(len(parsed)):
-                for j in xrange(len(parsed[i])):
+            for i in range(len(parsed)):
+                for j in range(len(parsed[i])):
                     if parsed[i][j]:
                         self.focus[i][j] = parsed[i][j]
 
-            print 'focus = ', self.focus
+            print('focus = ', self.focus)
         except:
             self.store.write('\0')
             raise
@@ -117,14 +120,14 @@ class Manager(object):
     # set arbitrary state for loaded desktop
     def set_loaded(self, loaded):
         self.init_loaded()
-        for i in xrange(len(loaded)):
+        for i in range(len(loaded)):
             self.loaded[i] = loaded[i]
         self.save()
 
     # implemented for horizontal non-overlapping views
     # returns corresponding display for window
     def get_screen(self, x):
-        for i in xrange(len(self.screens)):
+        for i in range(len(self.screens)):
             # TODO maybe include also 5-10 pixels less than Screen.w?
             if x - self.screens[i].x < self.screens[i].w:
                 return i
@@ -345,7 +348,7 @@ class Manager0(Manager):
         # TODO even with mirrored if get_screens leaves them out
         if i>0:
             # screens are sorted by x, this will return if there is mirrored
-            for j in xrange(1, len(self.screens)):
+            for j in range(1, len(self.screens)):
                 if self.screens[j-1].x == self.screens[j].x: # same offset
                     logging.warning('mirrored screen detected')
                     return
@@ -474,17 +477,17 @@ class Manager0(Manager):
 if __name__ == "__main__":
     m = Manager(display.Display())
     m.update()
-    print m.workspaces
+    print(m.workspaces)
     m = Manager(display.Display(), store='/')
-    print m.focus[3]
-    print m.focus
-    print m.history[3]
-    print m.loaded[3]
+    print(m.focus[3])
+    print(m.focus)
+    print(m.history[3])
+    print(m.loaded[3])
     m = Manager0(display.Display(), store='/')
-    print m.focus[3]
-    print m.focus
-    print m.history[3]
-    print m.loaded[3]
+    print(m.focus[3])
+    print(m.focus)
+    print(m.history[3])
+    print(m.loaded[3])
 
     #m.swap_workspace(0,1)
     #m.swap()

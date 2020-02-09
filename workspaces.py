@@ -29,9 +29,9 @@ clear = (X.Mod4Mask, 49)
 
 def build_keys(shortcuts):
     keys = {}
-    for monitor in xrange(len(shortcuts)):
+    for monitor in range(len(shortcuts)):
         for mod, codes in (shortcuts[monitor],):
-            for workspace in xrange(len(codes)):
+            for workspace in range(len(codes)):
                 keys[(mod, codes[workspace])] = ('switch', monitor, workspace+1)
     return keys
 
@@ -58,8 +58,8 @@ if __name__ == "__main__":
     import getopt
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hL:m:', ['help', 'loglevel=', 'mode='])
-    except getopt.GetoptError, err:
-        print str(err)
+    except getopt.GetoptError as err:
+        print(str(err))
         exit(1)
 
     manager = Manager0
@@ -75,25 +75,25 @@ if __name__ == "__main__":
             elif a == 'part':
                 manager = Manager0
             else:
-                print 'invalid mode "%s"' % a
+                print('invalid mode "%s"' % a)
                 usage()
                 exit(1)
         else:
             assert False, "unhandled option"
 
     if manager == Manager:
-        print 'using full workspaces: (N-1)*2 independent workspaces'
+        print('using full workspaces: (N-1)*2 independent workspaces')
     elif manager == Manager0:
-        print 'using partial workspaces: (N-1) independent workspaces'
+        print('using partial workspaces: (N-1) independent workspaces')
 
     #m = Manager(d, os.path.expanduser('~'))
     m = manager(d, os.path.expanduser('~'))
-    print m.loaded
+    print(m.loaded)
 
     # set initial workspaces (useful after crash)
     if len(args) > 0:
-        print 'setting initial workspaces to', args
-        loaded = map(int, args)
+        print('setting initial workspaces to', args)
+        loaded = list(map(int, args))
         m.set_loaded(loaded)
 
     # process events
@@ -115,4 +115,4 @@ if __name__ == "__main__":
                 m.clear()
             elif cmd[0] == 'switch':
                 m.switch(cmd[1], cmd[2])
-                #print m.loaded
+                #print(m.loaded)
